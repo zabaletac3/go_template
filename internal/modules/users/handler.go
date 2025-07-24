@@ -173,20 +173,20 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("User created successfully", "user_id", user.GetIDString(), "username", user.Username)
 }
 
-// UpdateUser handles PUT /api/v1/users/{id}
+// UpdateUser handles PATCH /api/v1/users/{id}
 // @Summary Update user
-// @Description Update user information with validation
+// @Description Partially update user information with validation (only provided fields are updated)
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
-// @Param user body models.UpdateUserRequest true "User update data"
+// @Param user body models.UpdateUserRequest true "User update data (partial)"
 // @Success 200 {object} response.Response{data=models.UserResponse} "User updated successfully"
 // @Failure 400 {object} response.Response{error=response.ErrorInfo} "Validation error or invalid request body"
 // @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
 // @Failure 409 {object} response.Response{error=response.ErrorInfo} "Username or email already exists"
 // @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
-// @Router /api/v1/users/{id} [put]
+// @Router /api/v1/users/{id} [patch]
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
 	id := r.PathValue("id")
@@ -322,7 +322,7 @@ func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("User search completed", "query", query, "count", len(users))
 }
 
-// ChangePassword handles PUT /api/v1/users/{id}/password
+// ChangePassword handles PATCH /api/v1/users/{id}/password
 // @Summary Change user password
 // @Description Change a user's password with current password verification
 // @Tags Users
@@ -334,7 +334,7 @@ func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} response.Response{error=response.ErrorInfo} "Validation error or incorrect current password"
 // @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
 // @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
-// @Router /api/v1/users/{id}/password [put]
+// @Router /api/v1/users/{id}/password [patch]
 func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
 	id := r.PathValue("id")
@@ -374,7 +374,7 @@ func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Password changed successfully", "user_id", id)
 }
 
-// VerifyUser handles PUT /api/v1/users/{id}/verify
+// VerifyUser handles PATCH /api/v1/users/{id}/verify
 // @Summary Verify user email
 // @Description Mark a user's email as verified
 // @Tags Users
@@ -385,7 +385,7 @@ func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} response.Response{error=response.ErrorInfo} "User already verified or invalid ID"
 // @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
 // @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
-// @Router /api/v1/users/{id}/verify [put]
+// @Router /api/v1/users/{id}/verify [patch]
 func (h *UserHandler) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
 	id := r.PathValue("id")

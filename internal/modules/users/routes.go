@@ -24,7 +24,7 @@ func RegisterRoutes(deps *container.Dependencies) {
 	mux.HandleFunc("GET /api/v1/users", handler.GetUsers)
 	mux.HandleFunc("GET /api/v1/users/{id}", handler.GetUser)
 	mux.HandleFunc("POST /api/v1/users", handler.CreateUser)
-	mux.HandleFunc("PUT /api/v1/users/{id}", handler.UpdateUser)
+	mux.HandleFunc("PATCH /api/v1/users/{id}", handler.UpdateUser)  
 	mux.HandleFunc("DELETE /api/v1/users/{id}", handler.DeleteUser)
 
 	// User search endpoint
@@ -37,8 +37,8 @@ func RegisterRoutes(deps *container.Dependencies) {
 	mux.HandleFunc("GET /api/v1/users/{id}/profile", handler.GetUserProfile)
 
 	// User account management endpoints
-	mux.HandleFunc("PUT /api/v1/users/{id}/password", handler.ChangePassword)
-	mux.HandleFunc("PUT /api/v1/users/{id}/verify", handler.VerifyUser)
+	mux.HandleFunc("PATCH /api/v1/users/{id}/password", handler.ChangePassword)
+	mux.HandleFunc("PATCH /api/v1/users/{id}/verify", handler.VerifyUser)
 
 	logger.Info("✅ User module routes registered successfully", 
 		"endpoints", 9, 

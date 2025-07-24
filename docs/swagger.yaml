@@ -458,10 +458,11 @@ paths:
       summary: Get user by ID
       tags:
       - Users
-    put:
+    patch:
       consumes:
       - application/json
-      description: Update user information with validation
+      description: Partially update user information with validation (only provided
+        fields are updated)
       parameters:
       - description: User ID
         example: 507f1f77bcf86cd799439011
@@ -470,7 +471,7 @@ paths:
         name: id
         required: true
         type: string
-      - description: User update data
+      - description: User update data (partial)
         in: body
         name: user
         required: true
@@ -528,7 +529,7 @@ paths:
       tags:
       - Users
   /api/v1/users/{id}/password:
-    put:
+    patch:
       consumes:
       - application/json
       description: Change a user's password with current password verification
@@ -639,7 +640,7 @@ paths:
       tags:
       - Users
   /api/v1/users/{id}/verify:
-    put:
+    patch:
       consumes:
       - application/json
       description: Mark a user's email as verified

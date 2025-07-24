@@ -512,8 +512,94 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "Update user information with validation",
+            "delete": {
+                "description": "Soft delete a user account (user data is preserved but marked as deleted)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "objectid",
+                        "example": "507f1f77bcf86cd799439011",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/go-template_internal_shared_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/go-template_internal_shared_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/go-template_internal_shared_response.ErrorInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/go-template_internal_shared_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/go-template_internal_shared_response.ErrorInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/go-template_internal_shared_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/go-template_internal_shared_response.ErrorInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Partially update user information with validation (only provided fields are updated)",
                 "consumes": [
                     "application/json"
                 ],
@@ -535,7 +621,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "User update data",
+                        "description": "User update data (partial)",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -636,96 +722,10 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "Soft delete a user account (user data is preserved but marked as deleted)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Delete user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "objectid",
-                        "example": "507f1f77bcf86cd799439011",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/go-template_internal_shared_response.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID format",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/go-template_internal_shared_response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/go-template_internal_shared_response.ErrorInfo"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/go-template_internal_shared_response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/go-template_internal_shared_response.ErrorInfo"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/go-template_internal_shared_response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/go-template_internal_shared_response.ErrorInfo"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
             }
         },
         "/api/v1/users/{id}/password": {
-            "put": {
+            "patch": {
                 "description": "Change a user's password with current password verification",
                 "consumes": [
                     "application/json"
@@ -922,7 +922,7 @@ const docTemplate = `{
             }
         },
         "/api/v1/users/{id}/verify": {
-            "put": {
+            "patch": {
                 "description": "Mark a user's email as verified",
                 "consumes": [
                     "application/json"
