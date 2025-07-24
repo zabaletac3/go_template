@@ -1,3 +1,4 @@
+// cmd/server/main.go
 package main
 
 import (
@@ -11,6 +12,7 @@ import (
 
 	"go-template/internal/container"
 	"go-template/internal/database"
+	"go-template/internal/modules/users"
 	"go-template/internal/shared/response"
 )
 
@@ -30,8 +32,8 @@ func main() {
 		log.Fatalf("❌ Failed to initialize dependencies: %v", err)
 	}
 
-	// Setup basic test routes for Phase 1
-	setupTestRoutes(deps)
+	// Setup routes (Phase 1 + Phase 2)
+	setupAllRoutes(deps)
 
 	// Create HTTP server with optimized settings
 	server := &http.Server{
@@ -45,7 +47,10 @@ func main() {
 	// Start server in a goroutine
 	go func() {
 		logger := deps.GetLogger("server")
-		logger.Info("🌟 Server starting", "port", deps.GetConfig().Port, "env", deps.GetConfig().Environment)
+		logger.Info("🌟 Server starting", 
+			"port", deps.GetConfig().Port, 
+			"env", deps.GetConfig().Environment,
+			"version", "1.0.0")
 		
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("❌ Server failed to start: %v", err)
@@ -76,22 +81,60 @@ func main() {
 	log.Println("✅ Server shutdown complete")
 }
 
-// setupTestRoutes sets up basic test routes for Phase 1 validation
-func setupTestRoutes(deps *container.Dependencies) {
+// setupAllRoutes configures all application routes
+func setupAllRoutes(deps *container.Dependencies) {
 	logger := deps.GetLogger("routes")
-	logger.Info("Setting up test routes for Phase 1")
+	logger.Info("🛤️  Setting up all application routes")
+
+	// Phase 1: Test routes (keep for debugging)
+	setupTestRoutes(deps)
+
+	// Phase 2: Business modules
+	setupBusinessRoutes(deps)
+
+	logger.Info("✅ All routes configured successfully")
+}
+
+// setupBusinessRoutes registers all business logic modules
+func setupBusinessRoutes(deps *container.Dependencies) {
+	logger := deps.GetLogger("business")
+	logger.Info("Registering business modules")
+
+	// Users module - completely self-contained
+	users.RegisterRoutes(deps)
+
+	// Future modules will be added here:
+	// products.RegisterRoutes(deps)
+	// orders.RegisterRoutes(deps)
+	// auth.RegisterRoutes(deps)
+
+	logger.Info("✅ Business modules registered successfully")
+}
+
+// setupTestRoutes sets up test and system routes (from Phase 1)
+func setupTestRoutes(deps *container.Dependencies) {
+	logger := deps.GetLogger("system")
+	logger.Info("Setting up system routes")
 
 	mux := deps.Mux
 
-	// Health check endpoint
+	// Health check endpoint - Enhanced for Phase 2
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Health check requested")
 		
 		health := map[string]interface{}{
 			"status":      "healthy",
 			"version":     "1.0.0",
+			"phase":       "2", // Updated to Phase 2
 			"environment": deps.GetConfig().Environment,
 			"timestamp":   time.Now().UTC().Format(time.RFC3339),
+			"features": map[string]bool{
+				"users_module":    true,
+				"mongodb":         true,
+				"redis_cache":     true,
+				"structured_logs": true,
+				"api_responses":   true,
+			},
 		}
 
 		// Check database connection
@@ -117,11 +160,58 @@ func setupTestRoutes(deps *container.Dependencies) {
 		response.JSON(w, health, http.StatusOK)
 	})
 
-	// Database test endpoint
+	// API Info endpoint - New for Phase 2
+	mux.HandleFunc("GET /api/v1", func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("API info requested")
+		
+		apiInfo := map[string]interface{}{
+			"name":        "Go API Template",
+			"version":     "1.0.0",
+			"phase":       "2",
+			"description": "A robust, scalable Go API template with Users module",
+			"endpoints": map[string]interface{}{
+				"health": "/health",
+				"api_info": "/api/v1",
+				"users": map[string]interface{}{
+					"list":         "GET /api/v1/users",
+					"get":          "GET /api/v1/users/{id}",
+					"create":       "POST /api/v1/users",
+					"update":       "PUT /api/v1/users/{id}",
+					"delete":       "DELETE /api/v1/users/{id}",
+					"search":       "GET /api/v1/users/search",
+					"stats":        "GET /api/v1/users/stats",
+					"profile":      "GET /api/v1/users/{id}/profile",
+					"change_password": "PUT /api/v1/users/{id}/password",
+					"verify":       "PUT /api/v1/users/{id}/verify",
+				},
+				"testing": map[string]string{
+					"database": "/test/database",
+					"cache":    "/test/cache",
+					"config":   "/test/config",
+					"responses": "/test/responses",
+				},
+			},
+			"features": []string{
+				"Dependency Container Architecture",
+				"MongoDB with optimized connection pooling",
+				"Redis caching with interface abstraction",
+				"Structured logging with slog",
+				"Standardized JSON responses",
+				"Complete Users CRUD module",
+				"Request validation and error handling",
+				"Soft delete support",
+				"Search and filtering capabilities",
+				"User statistics and analytics",
+			},
+		}
+
+		response.JSONWithMessage(w, apiInfo, "Welcome to Go API Template - Phase 2", http.StatusOK)
+	})
+
+	// Database test endpoint (from Phase 1)
 	mux.HandleFunc("GET /test/database", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Database test requested")
 		
-		// Test database connection
 		collections, err := database.GetCollectionNames(deps.GetDB())
 		if err != nil {
 			logger.Error("Failed to get collection names", err)
@@ -133,27 +223,26 @@ func setupTestRoutes(deps *container.Dependencies) {
 			"message":     "Database connection successful",
 			"database":    deps.GetConfig().DatabaseName,
 			"collections": collections,
+			"phase":       "2",
 		}
 
 		response.JSONWithMessage(w, testData, "Database test passed", http.StatusOK)
 	})
 
-	// Cache test endpoint
+	// Cache test endpoint (from Phase 1)
 	mux.HandleFunc("GET /test/cache", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Cache test requested")
 		
 		ctx := r.Context()
-		testKey := "test:cache:key"
-		testValue := "Hello, Redis!"
+		testKey := "test:cache:key:phase2"
+		testValue := "Hello from Phase 2!"
 
-		// Test cache set
 		if err := deps.GetCache().Set(ctx, testKey, testValue, 5*time.Minute); err != nil {
 			logger.Error("Failed to set cache value", err)
 			response.InternalServerError(w)
 			return
 		}
 
-		// Test cache get
 		retrievedValue, err := deps.GetCache().Get(ctx, testKey)
 		if err != nil {
 			logger.Error("Failed to get cache value", err)
@@ -162,60 +251,61 @@ func setupTestRoutes(deps *container.Dependencies) {
 		}
 
 		testData := map[string]interface{}{
-			"message":        "Cache connection successful",
-			"test_key":       testKey,
-			"test_value":     testValue,
+			"message":         "Cache connection successful",
+			"test_key":        testKey,
+			"test_value":      testValue,
 			"retrieved_value": retrievedValue,
-			"values_match":   testValue == retrievedValue,
+			"values_match":    testValue == retrievedValue,
+			"phase":           "2",
 		}
 
 		response.JSONWithMessage(w, testData, "Cache test passed", http.StatusOK)
 	})
 
-	// Configuration test endpoint
+	// Configuration test endpoint (from Phase 1)
 	mux.HandleFunc("GET /test/config", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Configuration test requested")
 		
 		config := deps.GetConfig()
 		testData := map[string]interface{}{
-			"message":     "Configuration loaded successfully",
-			"port":        config.Port,
-			"environment": config.Environment,
-			"log_level":   config.LogLevel,
-			"database":    config.DatabaseName,
-			"is_dev":      config.IsDevelopment(),
-			"is_prod":     config.IsProduction(),
-			"is_test":     config.IsTest(),
+			"message":      "Configuration loaded successfully",
+			"port":         config.Port,
+			"environment":  config.Environment,
+			"log_level":    config.LogLevel,
+			"database":     config.DatabaseName,
+			"is_dev":       config.IsDevelopment(),
+			"is_prod":      config.IsProduction(),
+			"is_test":      config.IsTest(),
+			"phase":        "2",
 		}
 
 		response.JSONWithMessage(w, testData, "Configuration test passed", http.StatusOK)
 	})
 
-	// JSON response test endpoint
+	// Response formats test endpoint (from Phase 1)
 	mux.HandleFunc("GET /test/responses", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Response formats test requested")
 		
-		// Test different response formats based on query parameter
 		format := r.URL.Query().Get("format")
 		
 		switch format {
 		case "error":
-			response.Error(w, "This is a test error", http.StatusBadRequest)
+			response.Error(w, "This is a test error from Phase 2", http.StatusBadRequest)
 		case "validation":
 			validationErrors := []response.ValidationError{
-				response.NewValidationError("email", "Email is required", ""),
-				response.NewValidationError("password", "Password must be at least 8 characters", "123"),
+				response.NewValidationError("username", "Username is required", ""),
+				response.NewValidationError("email", "Invalid email format", "invalid-email"),
 			}
 			response.ValidationErrors(w, validationErrors)
 		case "not_found":
-			response.NotFound(w, "Test resource")
+			response.NotFound(w, "Test user")
 		case "unauthorized":
-			response.Unauthorized(w, "Invalid credentials")
+			response.Unauthorized(w, "Authentication required")
 		case "created":
-			response.Created(w, map[string]string{"id": "123", "name": "Test"}, "")
+			response.Created(w, map[string]string{"id": "123", "username": "testuser"}, "")
 		default:
 			testData := map[string]interface{}{
-				"message": "Response system working correctly",
+				"message": "Response system working correctly - Phase 2",
 				"available_formats": []string{
 					"?format=error",
 					"?format=validation", 
@@ -223,30 +313,59 @@ func setupTestRoutes(deps *container.Dependencies) {
 					"?format=unauthorized",
 					"?format=created",
 				},
+				"phase": "2",
 			}
 			response.JSON(w, testData, http.StatusOK)
 		}
 	})
 
-	// Root endpoint
+	// Root endpoint - Updated for Phase 2
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Root endpoint accessed")
 		
 		welcomeData := map[string]interface{}{
-			"message":     "🚀 Welcome to Go API Template",
+			"message":     "🚀 Welcome to Go API Template - Phase 2",
 			"version":     "1.0.0",
+			"phase":       "2 - Users Module Complete",
 			"environment": deps.GetConfig().Environment,
-			"endpoints": map[string]string{
-				"health":      "/health",
-				"db_test":     "/test/database", 
-				"cache_test":  "/test/cache",
-				"config_test": "/test/config",
-				"response_test": "/test/responses",
+			"features": []string{
+				"✅ Dependency Container Architecture",
+				"✅ MongoDB with Connection Pooling",
+				"✅ Redis Cache with Interface Abstraction",
+				"✅ Structured Logging",
+				"✅ Standardized JSON Responses",
+				"✅ Complete Users CRUD Module",
+				"✅ Request Validation",
+				"✅ Search & Filtering",
+				"✅ User Statistics",
 			},
+			"endpoints": map[string]interface{}{
+				"system": map[string]string{
+					"health":     "/health",
+					"api_info":   "/api/v1",
+				},
+				"users": map[string]string{
+					"list_users":    "GET /api/v1/users",
+					"get_user":      "GET /api/v1/users/{id}",
+					"create_user":   "POST /api/v1/users",
+					"update_user":   "PUT /api/v1/users/{id}",
+					"delete_user":   "DELETE /api/v1/users/{id}",
+					"search_users":  "GET /api/v1/users/search",
+					"user_stats":    "GET /api/v1/users/stats",
+					"user_profile":  "GET /api/v1/users/{id}/profile",
+				},
+				"testing": map[string]string{
+					"db_test":       "/test/database",
+					"cache_test":    "/test/cache",
+					"config_test":   "/test/config",
+					"response_test": "/test/responses",
+				},
+			},
+			"next_phase": "Phase 3 - HTTP Middleware (CORS, Auth, Rate Limiting)",
 		}
 
-		response.JSONWithMessage(w, welcomeData, "Phase 1 - Infrastructure ready!", http.StatusOK)
+		response.JSONWithMessage(w, welcomeData, "Phase 2 Complete - Users Module Ready!", http.StatusOK)
 	})
 
-	logger.Info("✅ Test routes setup completed")
+	logger.Info("✅ System routes configured successfully")
 }
