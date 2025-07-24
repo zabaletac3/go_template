@@ -16,9 +16,9 @@ type BaseModel struct {
 }
 
 // NewBaseModel creates a new base model with current timestamps
-func NewBaseModel() BaseModel {
+func NewBaseModel() *BaseModel {
 	now := time.Now().UTC()
-	return BaseModel{
+	return &BaseModel{
 		ID:        primitive.NewObjectID(),
 		CreatedAt: now,
 		UpdatedAt: now,

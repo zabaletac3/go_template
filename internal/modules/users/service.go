@@ -370,7 +370,6 @@ func (s *UserService) ChangePassword(ctx context.Context, id string, req *models
 	// Update in database
 	updates := map[string]interface{}{
 		"password": user.Password,
-		"salt":     user.Salt,
 	}
 	
 	if err := s.repo.Update(ctx, id, updates); err != nil {

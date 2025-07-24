@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
+	"go-template/internal/shared/utils"
 	"regexp"
 	"strings"
 	"time"
@@ -23,8 +23,7 @@ type User struct {
 	LastName    string `json:"last_name" bson:"last_name"`
 	
 	// Authentication
-	Password    string `json:"-" bson:"password"` // Never send password in JSON
-	Salt        string `json:"-" bson:"salt"`     // Password salt
+	Password    string `json:"-" bson:"password"`
 	
 	// Profile Information
 	Avatar      string    `json:"avatar" bson:"avatar"`
@@ -71,20 +70,16 @@ func NewUser(username, email, password string) (*User, error) {
 		return nil, err
 	}
 	
-	// Generate salt and hash password
-	salt, err := generateSalt()
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate salt: %w", err)
+		return nil, err
 	}
 	
-	hashedPassword := hashPassword(password, salt)
-	
 	user := &User{
-		BaseModel: NewBaseModel(),
+		BaseModel: *NewBaseModel(),
 		Username:  strings.ToLower(strings.TrimSpace(username)),
 		Email:     strings.ToLower(strings.TrimSpace(email)),
 		Password:  hashedPassword,
-		Salt:      salt,
 		IsActive:  true,
 		IsVerified: false,
 		Roles:     []string{RoleUser}, // Default role
@@ -151,18 +146,12 @@ func (u *User) UpdateUser(updates map[string]interface{}) error {
 
 // SetPassword updates the user's password with proper hashing
 func (u *User) SetPassword(newPassword string) error {
-	if err := ValidatePassword(newPassword); err != nil {
+	hashedPassword, err := utils.HashPassword(newPassword)
+	if err != nil {
 		return err
 	}
 	
-	// Generate new salt
-	salt, err := generateSalt()
-	if err != nil {
-		return fmt.Errorf("failed to generate salt: %w", err)
-	}
-	
-	u.Salt = salt
-	u.Password = hashPassword(newPassword, salt)
+	u.Password = hashedPassword
 	u.UpdateTimestamp()
 	
 	return nil
@@ -170,8 +159,34 @@ func (u *User) SetPassword(newPassword string) error {
 
 // CheckPassword verifies if the provided password matches the user's password
 func (u *User) CheckPassword(password string) bool {
-	hashedInput := hashPassword(password, u.Salt)
-	return u.Password == hashedInput
+	return utils.ComparePassword(u.Password, password)
+}
+
+// NeedsPasswordRehash checks if the password needs to be rehashed (e.g., cost changed)
+func (u *User) NeedsPasswordRehash() bool {
+	return utils.NeedsRehash(u.Password)
+}
+
+// RehashPasswordIfNeeded rehashes the password if needed and returns true if rehashed
+func (u *User) RehashPasswordIfNeeded(currentPassword string) (bool, error) {
+	if !u.NeedsPasswordRehash() {
+		return false, nil
+	}
+	
+	// Verify current password first
+	if !u.CheckPassword(currentPassword) {
+		return false, errors.New("invalid current password")
+	}
+	
+	// Rehash with current settings
+	newHash, err := utils.HashPassword(currentPassword)
+	if err != nil {
+		return false, err
+	}
+	
+	u.Password = newHash
+	u.UpdateTimestamp()
+	return true, nil
 }
 
 // RecordLogin updates login-related fields
