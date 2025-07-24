@@ -1,4 +1,3 @@
-// internal/modules/users/handler.go
 package users
 
 import (
@@ -29,20 +28,20 @@ func NewUserHandler(service *UserService, logger interfaces.LoggerInterface) *Us
 
 // GetUsers handles GET /api/v1/users
 // @Summary Get all users
-// @Description Get all users with pagination and filtering
-// @Tags users
+// @Description Get all users with pagination and filtering options
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param page query int false "Page number" default(1)
-// @Param limit query int false "Items per page" default(20)
+// @Param page query int false "Page number" default(1) minimum(1)
+// @Param limit query int false "Items per page" default(20) minimum(1) maximum(100)
 // @Param search query string false "Search in username, email, first_name, last_name"
-// @Param role query string false "Filter by role"
+// @Param role query string false "Filter by role" Enums(user, admin, moderator)
 // @Param is_active query bool false "Filter by active status"
-// @Param sort_by query string false "Sort field" default(created_at)
-// @Param sort_dir query string false "Sort direction (asc/desc)" default(desc)
-// @Success 200 {object} response.Response{data=models.UserListResponse}
-// @Failure 400 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Param sort_by query string false "Sort field" default(created_at) Enums(created_at, updated_at, username, email, first_name, last_name, login_count)
+// @Param sort_dir query string false "Sort direction" default(desc) Enums(asc, desc)
+// @Success 200 {object} response.Response{data=models.UserListResponse,meta=response.Meta} "List of users with pagination metadata"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Invalid query parameters"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users [get]
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Getting users list")
@@ -86,15 +85,15 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 // GetUser handles GET /api/v1/users/{id}
 // @Summary Get user by ID
-// @Description Get a specific user by their ID
-// @Tags users
+// @Description Get a specific user by their unique identifier
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} response.Response{data=models.UserResponse}
-// @Failure 400 {object} response.Response
-// @Failure 404 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
+// @Success 200 {object} response.Response{data=models.UserResponse} "User information"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Invalid user ID format"
+// @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/{id} [get]
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
@@ -128,15 +127,15 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 // CreateUser handles POST /api/v1/users
 // @Summary Create a new user
-// @Description Create a new user account
-// @Tags users
+// @Description Create a new user account with validation
+// @Tags Users
 // @Accept json
 // @Produce json
 // @Param user body models.CreateUserRequest true "User creation data"
-// @Success 201 {object} response.Response{data=models.UserResponse}
-// @Failure 400 {object} response.Response
-// @Failure 409 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Success 201 {object} response.Response{data=models.UserResponse} "User created successfully"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Validation error or invalid request body"
+// @Failure 409 {object} response.Response{error=response.ErrorInfo} "Username or email already exists"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users [post]
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Creating new user")
@@ -176,17 +175,17 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUser handles PUT /api/v1/users/{id}
 // @Summary Update user
-// @Description Update user information
-// @Tags users
+// @Description Update user information with validation
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
+// @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
 // @Param user body models.UpdateUserRequest true "User update data"
-// @Success 200 {object} response.Response{data=models.UserResponse}
-// @Failure 400 {object} response.Response
-// @Failure 404 {object} response.Response
-// @Failure 409 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Success 200 {object} response.Response{data=models.UserResponse} "User updated successfully"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Validation error or invalid request body"
+// @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
+// @Failure 409 {object} response.Response{error=response.ErrorInfo} "Username or email already exists"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/{id} [put]
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
@@ -238,15 +237,15 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // DeleteUser handles DELETE /api/v1/users/{id}
 // @Summary Delete user
-// @Description Soft delete a user account
-// @Tags users
+// @Description Soft delete a user account (user data is preserved but marked as deleted)
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} response.Response
-// @Failure 400 {object} response.Response
-// @Failure 404 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
+// @Success 200 {object} response.Response "User deleted successfully"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Invalid user ID format"
+// @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/{id} [delete]
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
@@ -277,15 +276,15 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 // SearchUsers handles GET /api/v1/users/search
 // @Summary Search users
-// @Description Search users by username, email, or name
-// @Tags users
+// @Description Search users by username, email, first name, or last name
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param q query string true "Search query"
-// @Param limit query int false "Maximum results" default(10)
-// @Success 200 {object} response.Response{data=[]models.UserProfileResponse}
-// @Failure 400 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Param q query string true "Search query" minlength(1) maxlength(100) example(john)
+// @Param limit query int false "Maximum results" default(10) minimum(1) maximum(50)
+// @Success 200 {object} response.Response{data=[]models.UserProfileResponse} "List of matching user profiles"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Missing or invalid search query"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/search [get]
 func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	// Get search query
@@ -325,16 +324,16 @@ func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 
 // ChangePassword handles PUT /api/v1/users/{id}/password
 // @Summary Change user password
-// @Description Change a user's password
-// @Tags users
+// @Description Change a user's password with current password verification
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
+// @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
 // @Param password body models.ChangePasswordRequest true "Password change data"
-// @Success 200 {object} response.Response
-// @Failure 400 {object} response.Response
-// @Failure 404 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Success 200 {object} response.Response "Password changed successfully"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Validation error or incorrect current password"
+// @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/{id}/password [put]
 func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
@@ -378,14 +377,14 @@ func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // VerifyUser handles PUT /api/v1/users/{id}/verify
 // @Summary Verify user email
 // @Description Mark a user's email as verified
-// @Tags users
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} response.Response
-// @Failure 400 {object} response.Response
-// @Failure 404 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
+// @Success 200 {object} response.Response "User verified successfully"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "User already verified or invalid ID"
+// @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/{id}/verify [put]
 func (h *UserHandler) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path
@@ -419,12 +418,12 @@ func (h *UserHandler) VerifyUser(w http.ResponseWriter, r *http.Request) {
 
 // GetUserStats handles GET /api/v1/users/stats
 // @Summary Get user statistics
-// @Description Get aggregated user statistics
-// @Tags users
+// @Description Get aggregated user statistics including total users, active users, verified users, etc.
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.Response{data=map[string]interface{}}
-// @Failure 500 {object} response.Response
+// @Success 200 {object} response.Response{data=object} "User statistics"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/stats [get]
 func (h *UserHandler) GetUserStats(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Getting user statistics")
@@ -443,15 +442,15 @@ func (h *UserHandler) GetUserStats(w http.ResponseWriter, r *http.Request) {
 
 // GetUserProfile handles GET /api/v1/users/{id}/profile
 // @Summary Get user public profile
-// @Description Get a user's public profile information
-// @Tags users
+// @Description Get a user's public profile information (limited data for privacy)
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} response.Response{data=models.UserProfileResponse}
-// @Failure 400 {object} response.Response
-// @Failure 404 {object} response.Response
-// @Failure 500 {object} response.Response
+// @Param id path string true "User ID" format(objectid) example(507f1f77bcf86cd799439011)
+// @Success 200 {object} response.Response{data=models.UserProfileResponse} "User public profile"
+// @Failure 400 {object} response.Response{error=response.ErrorInfo} "Invalid user ID format"
+// @Failure 404 {object} response.Response{error=response.ErrorInfo} "User not found"
+// @Failure 500 {object} response.Response{error=response.ErrorInfo} "Internal server error"
 // @Router /api/v1/users/{id}/profile [get]
 func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	// Extract user ID from path

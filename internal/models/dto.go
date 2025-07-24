@@ -9,35 +9,35 @@ import (
 
 // CreateUserRequest represents the request payload for creating a user
 type CreateUserRequest struct {
-	Username  string `json:"username" validate:"required,min=3,max=30"`
-	Email     string `json:"email" validate:"required,email,max=255"`
-	Password  string `json:"password" validate:"required,min=8,max=128"`
-	FirstName string `json:"first_name,omitempty" validate:"max=50"`
-	LastName  string `json:"last_name,omitempty" validate:"max=50"`
+	Username  string `json:"username" validate:"required,min=3,max=30" example:"johndoe"`
+	Email     string `json:"email" validate:"required,email,max=255" example:"john@example.com"`
+	Password  string `json:"password" validate:"required,min=8,max=128" example:"SecurePass123"`
+	FirstName string `json:"first_name,omitempty" validate:"max=50" example:"John"`
+	LastName  string `json:"last_name,omitempty" validate:"max=50" example:"Doe"`
 }
 
 // UpdateUserRequest represents the request payload for updating a user
 type UpdateUserRequest struct {
-	Username  *string `json:"username,omitempty" validate:"omitempty,min=3,max=30"`
-	Email     *string `json:"email,omitempty" validate:"omitempty,email,max=255"`
-	FirstName *string `json:"first_name,omitempty" validate:"omitempty,max=50"`
-	LastName  *string `json:"last_name,omitempty" validate:"omitempty,max=50"`
-	Bio       *string `json:"bio,omitempty" validate:"omitempty,max=500"`
-	Location  *string `json:"location,omitempty" validate:"omitempty,max=100"`
-	Website   *string `json:"website,omitempty" validate:"omitempty,url,max=255"`
+	Username  *string `json:"username,omitempty" validate:"omitempty,min=3,max=30" example:"janedoe"`
+	Email     *string `json:"email,omitempty" validate:"omitempty,email,max=255" example:"jane@example.com"`
+	FirstName *string `json:"first_name,omitempty" validate:"omitempty,max=50" example:"Jane"`
+	LastName  *string `json:"last_name,omitempty" validate:"omitempty,max=50" example:"Smith"`
+	Bio       *string `json:"bio,omitempty" validate:"omitempty,max=500" example:"Software developer and coffee enthusiast"`
+	Location  *string `json:"location,omitempty" validate:"omitempty,max=100" example:"San Francisco, CA"`
+	Website   *string `json:"website,omitempty" validate:"omitempty,url,max=255" example:"https://johndoe.dev"`
 }
 
 // ChangePasswordRequest represents the request payload for changing password
 type ChangePasswordRequest struct {
-	CurrentPassword string `json:"current_password" validate:"required"`
-	NewPassword     string `json:"new_password" validate:"required,min=8,max=128"`
-	ConfirmPassword string `json:"confirm_password" validate:"required"`
+	CurrentPassword string `json:"current_password" validate:"required" example:"OldPassword123"`
+	NewPassword     string `json:"new_password" validate:"required,min=8,max=128" example:"NewSecurePassword456"`
+	ConfirmPassword string `json:"confirm_password" validate:"required" example:"NewSecurePassword456"`
 }
 
 // LoginRequest represents the request payload for user login
 type LoginRequest struct {
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Username string `json:"username" validate:"required" example:"johndoe"`
+	Password string `json:"password" validate:"required" example:"SecurePass123"`
 }
 
 // UserResponse represents the response payload for user data
